@@ -1,5 +1,7 @@
-class trailingStop:
-    def __init__ (self, balance=10000, buy_percent=0.2):
+from ..BaseAlgorithm import BaseAlgorithm
+
+class TrailingStopLossAlgorithm(BaseAlgorithm):
+    def __init__ (self, balance, buy_percent=0.2):
         '''
         Initialize the trailingStop instance.
 
@@ -13,21 +15,6 @@ class trailingStop:
         self.low_threshold = 0
         self.high_threshold = 0
 
-    def _max_buy(self, price_per_stock):
-        return self.balance // price_per_stock
-
-    def _reset_threshold(self):
-        self.low_threshold = 0
-        self.high_threshold = 0
-
-    def _buy(self, price):
-        self.stockOwned = self._max_buy(price)
-        self.balance -= (price * self.stockOwned)
-
-    def _sell(self, price):
-        self.balance += (price * self.stockOwned)
-        self.stockOwned = 0
-        self._reset_threshold()
 
     '''
     Trailing Stop based algorithm to outperform the market.
@@ -45,7 +32,7 @@ class trailingStop:
     @returns:
     float: Final balance after performing the backtest.
     '''
-    def back_test(self, prices):
+    def run(self, prices) -> float:
         min_price = float('inf')
         last_price = float('inf')
         bought = False
@@ -76,3 +63,19 @@ class trailingStop:
             self.balance += (price * self.stockOwned)
             self.stockOwned = 0
         return self.balance
+
+    def _max_buy(self, price_per_stock):
+        return self.balance // price_per_stock
+
+    def _reset_threshold(self):
+        self.low_threshold = 0
+        self.high_threshold = 0
+
+    def _buy(self, price):
+        self.stockOwned = self._max_buy(price)
+        self.balance -= (price * self.stockOwned)
+
+    def _sell(self, price):
+        self.balance += (price * self.stockOwned * 0.92)
+        self.stockOwned = 0
+        self._reset_threshold()

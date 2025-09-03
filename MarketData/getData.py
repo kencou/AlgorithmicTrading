@@ -1,44 +1,67 @@
-import yfinance as yf
+# MarketData/getData.py
+from __future__ import annotations
+
+from typing import List, Optional
 import pandas as pd
-import datetime
-import os
+import yfinance as yf
+
 
 class MarketData:
-    def __init__(self, ticker, period=720, interval="1h"):
-        self._ticker = ticker
-        stock = yf.Ticker(ticker)
-        end_date = datetime.datetime.now()
-        start_date = end_date - datetime.timedelta(days=720)
-        end_date = end_date - datetime.timedelta(days=0)
-        self._df = stock.history(start=start_date, end=end_date, interval='1h')
-        if self._df.empty:
-            try:
-                self._ticker = ticker
-                file_path = f'data/{self._ticker}.csv'
-                stock_data = pd.read_csv(file_path)
-                self._df = stock_data
-            except FileNotFoundError:
-                raise ValueError(f"Data not found for ticker: {self._ticker}")
-        self._df.sort_index(inplace=True)
-        # self.save_to_csv()
+    """
+    Minimal helper focused on HOURLY prices.
+    - No local storage.
+    - get_hourly_prices(): returns list of hourly Close prices, most-recent last.
+    """
 
-    def get_prices(self):
-        open_prices = self._df['Open']
-        return open_prices.tolist()
+    _MAX_HOURLY_LOOKBACK_DAYS = 730  # Yahoo cap for 60m bars
 
-    def save_to_csv(self):
-        os.makedirs("data", exist_ok=True)
-        file_path = f"data/{self._ticker}.csv"
-        if os.path.exists(file_path):
-            try:
-                existing_data = pd.read_csv(file_path, index_col=0, parse_dates=True)
-            except ValueError:
-                # If 'Date' is not in the CSV file, we'll assume there's no date column
-                existing_data = pd.read_csv(file_path)
-            updated_data = pd.concat([existing_data, self._df])
-            updated_data = updated_data[~updated_data.index.duplicated(keep="last")]
-            updated_data.sort_index(inplace=True)
-        else:
-            updated_data = self._df
-        updated_data.to_csv(file_path)
-        print(f"Data successfully saved to {file_path}")
+    def __init__(self, ticker: str) -> None:
+        self.ticker = ticker.upper().strip()
+
+    def get_hourly_prices(
+        self,
+        lookback_days: Optional[int] = None, # how many days back to fetch
+        rth_only: bool = False, # regular trading hours only
+        auto_adjust: bool = True, # adjust for splits/dividends
+    ) -> List[float]:
+        """
+        Fetch hourly bars and return a list of Close prices (floats).
+
+        Parameters
+        ----------
+        lookback_days : int | None
+            Days to look back. Default uses Yahoo's practical max (~730).
+        rth_only : bool
+            If True, keep only Regular Trading Hours (09:30–16:00 America/New_York).
+        auto_adjust : bool
+            If True, adjust for splits/dividends (recommended).
+
+        Returns
+        -------
+        List[float]  # most-recent price is last element
+        """
+        days = lookback_days or self._MAX_HOURLY_LOOKBACK_DAYS
+
+        df = yf.download(
+            self.ticker,
+            period=f"{days}d",
+            interval="60m",
+            auto_adjust=auto_adjust,
+            actions=False,
+            progress=False,
+        )
+
+        if df is None or df.empty:
+            return []
+
+        # Ensure naive timestamps for consistent handling
+        df.index = pd.to_datetime(df.index).tz_localize(None)
+
+        if rth_only:
+            # treat timestamps as NY-local, filter RTH, then drop tz again
+            df = df.tz_localize("America/New_York", ambiguous="NaT", nonexistent="shift_forward")
+            df = df.between_time("09:30", "16:00", include_start=True, include_end=True)
+            df = df.tz_convert(None)
+
+        # Return Close column as a plain Python list (Series -> list)
+        return df["Close"].astype(float).squeeze().tolist()

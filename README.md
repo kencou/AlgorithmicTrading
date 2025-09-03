@@ -4,6 +4,8 @@ After interning at a quant trading company, I became interested the US stock mar
 
 With a background in computer science, I created this repository to develop and backtest algorithmic trading strategies using the market data from the past 2 years (720 days to be exact).
 
+You can easily understand what I am doinng in the BackTest folder.
+
 ## Requirements
 
 To run this project, you will need:
