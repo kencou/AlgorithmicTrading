@@ -19,7 +19,7 @@ def _fmtp(p):  # percent
     return f"{sign}{p:.2f}%"
 
 if __name__ == "__main__":
-    tickers = ['TSLA', 'OVV', 'OPEN', 'QS', 'MP', 'NIO', 'HRI', 'RUN', 'COIN', 'PLTR', 'CLF', 'SHOP']
+    tickers = [ "AMD", "NVDA", "TSLA", "AAPL", "MSFT", "GOOGL", "AMZN", "META"]
     balance = 10_000
 
     buyHold = BuyHold(tickers, balance)
@@ -32,6 +32,7 @@ if __name__ == "__main__":
 
     # header
     print("\n=== Strategy Comparison vs Buy&Hold ===")
+    print("BH = Buy&Hold, TSL = Trailing Stop Loss, Grid = Grid Trading")
     print(f"{'Ticker':6}  {'Buy&Hold':>12}  {'TSL':>12}  {'Δ TSL vs BH':>12}  {'Δ% TSL':>9}  {'Grid':>12}  {'Δ Grid vs BH':>12}  {'Δ% Grid':>9}")
     print("-" * 100)
 
