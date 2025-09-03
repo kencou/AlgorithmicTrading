@@ -19,7 +19,7 @@ def _fmtp(p):  # percent
     return f"{sign}{p:.2f}%"
 
 if __name__ == "__main__":
-    tickers = ["AMD", "NVDA", "TSLA", "AAPL", "MSFT", "GOOGL", "AMZN", "META"]
+    tickers = ['TSLA', 'OVV', 'OPEN', 'QS', 'MP', 'NIO', 'HRI', 'RUN', 'COIN', 'PLTR', 'CLF', 'SHOP']
     balance = 10_000
 
     buyHold = BuyHold(tickers, balance)
